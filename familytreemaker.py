@@ -32,6 +32,7 @@ __version__ = "1.0"
 import argparse
 import random
 import re
+from typing import Any
 
 class Person:
 	"""This class represents a person.
@@ -46,17 +47,17 @@ class Person:
 
 	"""
 
-	def __init__(self, desc):
-		self.attr = {}
-		self.parents = []
-		self.households = []
+	def __init__(self, desc: str):
+		self.attr: dict[str, Any] = {}
+		self.parents: list[Person] = []
+		self.households: list[Household] = []
 
 		desc = desc.strip()
 		if '(' in desc and ')' in desc:
 			self.name, attr = desc[0:-1].split('(')
 			self.name = self.name.strip()
-			attr = map(lambda x: x.strip(), attr.split(','))
-			for a in attr:
+			map_attr = map(lambda x: x.strip(), attr.split(','))
+			for a in map_attr:
 				if '=' in a:
 					k, v = a.split('=')
 					self.attr[k] = v
@@ -78,8 +79,8 @@ class Person:
 		return self.name
 
 	def dump(self):
-		return	'Person: %s (%s)\n' % (self.name, str(self.attr)) + \
-				'  %d households' % len(self.households)
+		return	(f'Person: {self.name} ({str(self.attr)})\n'
+				f'  {len(self.households)} households')
 
 	def graphviz(self):
 		label = self.name
@@ -108,8 +109,8 @@ class Household:
 	"""
 
 	def __init__(self):
-		self.parents = []
-		self.kids = []
+		self.parents: list[Person] = []
+		self.kids: list[Person] = []
 		self.id = 0
 	
 	def __str__(self):
@@ -130,8 +131,8 @@ class Family:
 
 	"""
 
-	everybody = {}
-	households = []
+	everybody: dict[Any, Any] = {}
+	households: list[Household] = []
 
 	invisible = '[shape=circle,label="",height=0.01,width=0.01]'
 
@@ -150,7 +151,7 @@ class Family:
 
 		return self.everybody[key]
 
-	def add_household(self, h):
+	def add_household(self, h: Household):
 		"""Adds a union (household) to self.households, and updates the
 		family members infos about this union.
 
