@@ -32,7 +32,6 @@ __version__ = "1.0"
 import argparse
 import random
 import re
-import sys
 
 class Person:
 	"""This class represents a person.
@@ -67,11 +66,11 @@ class Person:
 			self.name = desc
 
 		if 'id' in self.attr:
-			  self.id = self.attr['id']
+			self.id = self.attr['id']
 		else:
 			self.id = re.sub('[^0-9A-Za-z]', '', self.name)
 			if 'unique' in self.attr:
-				  self.id += str(random.randint(100, 999))
+				self.id += str(random.randint(100, 999))
 
 		self.follow_kids = True
 
@@ -134,7 +133,7 @@ class Family:
 	everybody = {}
 	households = []
 
-	invisible = '[shape=circle,label="",height=0.01,width=0.01]';
+	invisible = '[shape=circle,label="",height=0.01,width=0.01]'
 
 	def add_person(self, string):
 		"""Adds a person to self.everybody, or update his/her info if this
@@ -164,7 +163,7 @@ class Family:
 		self.households.append(h)
 
 		for p in h.parents:
-			if not h in p.households:
+			if h not in p.households:
 				p.households.append(h)
 
 	def find_person(self, name):
@@ -238,6 +237,7 @@ class Family:
 
 		return next_gen
 
+	@staticmethod
 	def get_spouse(household, person):
 		"""Returns the spouse or husband of a person in a union.
 
@@ -254,16 +254,16 @@ class Family:
 
 		prev = None
 		for p in gen:
-			l = len(p.households)
+			number_of_households = len(p.households)
 
 			if prev:
-				if l <= 1:
+				if number_of_households <= 1:
 					print('\t\t%s -> %s [style=invis];' % (prev, p.id))
 				else:
 					print('\t\t%s -> %s [style=invis];'
-						  % (prev, Family.get_spouse(p.households[0], p).id))
+							% (prev, Family.get_spouse(p.households[0], p).id))
 
-			if l == 0:
+			if number_of_households == 0:
 				prev = p.id
 				continue
 			elif len(p.households) > 2:
@@ -272,14 +272,14 @@ class Family:
 								'implemented')
 
 			# Display those on the left (if any)
-			for i in range(0, int(l/2)):
+			for i in range(0, int(number_of_households/2)):
 				h = p.households[i]
 				spouse = Family.get_spouse(h, p)
 				print('\t\t%s -> h%d -> %s;' % (spouse.id, h.id, p.id))
 				print('\t\th%d%s;' % (h.id, Family.invisible))
 
 			# Display those on the right (at least one)
-			for i in range(int(l/2), l):
+			for i in range(int(number_of_households/2), number_of_households):
 				h = p.households[i]
 				spouse = Family.get_spouse(h, p)
 				print('\t\t%s -> h%d -> %s;' % (p.id, h.id, spouse.id))
@@ -296,12 +296,12 @@ class Family:
 					continue
 				if prev:
 					print('\t\t%s -> h%d_0 [style=invis];' % (prev, h.id))
-				l = len(h.kids)
-				if l % 2 == 0:
+				number_of_kids = len(h.kids)
+				if number_of_kids % 2 == 0:
 					# We need to add a node to keep symmetry
-					l += 1
-				print('\t\t' + ' -> '.join(map(lambda x: 'h%d_%d' % (h.id, x), range(l))) + ';')
-				for i in range(l):
+					number_of_kids += 1
+				print('\t\t' + ' -> '.join(map(lambda x: 'h%d_%d' % (h.id, x), range(number_of_kids))) + ';')
+				for i in range(number_of_kids):
 					print('\t\th%d_%d%s;' % (h.id, i, Family.invisible))
 					prev = 'h%d_%d' % (h.id, i)
 		print('\t}')
@@ -310,11 +310,11 @@ class Family:
 			for h in p.households:
 				if len(h.kids) > 0:
 					print('\t\th%d -> h%d_%d;'
-					      % (h.id, h.id, int(len(h.kids)/2)))
+						% (h.id, h.id, int(len(h.kids)/2)))
 					i = 0
 					for c in h.kids:
 						print('\t\th%d_%d -> %s;'
-						      % (h.id, i, c.id))
+							% (h.id, i, c.id))
 						i += 1
 						if i == len(h.kids)/2:
 							i += 1
@@ -328,8 +328,8 @@ class Family:
 		gen = [ancestor]
 
 		print('digraph {\n' + \
-		      '\tnode [shape=box];\n' + \
-		      '\tedge [dir=none];\n')
+			'\tnode [shape=box];\n' + \
+			'\tedge [dir=none];\n')
 
 		for p in self.everybody.values():
 			print('\t' + p.graphviz() + ';')
@@ -347,7 +347,7 @@ def main():
 	"""
 	# Parse command line options
 	parser = argparse.ArgumentParser(description=
-			 'Generates a family tree graph from a simple text file')
+			'Generates a family tree graph from a simple text file')
 	parser.add_argument('-a', dest='ancestor',
 						help='make the family tree from an ancestor (if '+
 						'omitted, the program will try to find an ancestor)')
