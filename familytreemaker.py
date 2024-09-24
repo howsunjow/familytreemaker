@@ -75,26 +75,26 @@ class Person:
 
 		self.follow_kids = True
 
-	def __str__(self):
+	def __str__(self) -> str:
 		return self.name
 
-	def dump(self):
+	def dump(self) -> str:
 		return	(f'Person: {self.name} ({str(self.attr)})\n'
 				f'  {len(self.households)} households')
 
-	def graphviz(self):
+	def graphviz(self) -> str:
 		label = self.name
-		if 'surname' in self.attr:
-			label += '\\n« ' + str(self.attr['surname']) + '»'
+		if 'surname' in self.attr:			
+			label += f'\\n« {str(self.attr["surname"])}»'
 		if 'birthday' in self.attr:
-			label += '\\n' + str(self.attr['birthday'])
+			label += f'\\n {str(self.attr["birthday"])}'
 			if 'deathday' in self.attr:
-				label += ' † ' + str(self.attr['deathday'])
+				label += f' † {str(self.attr["deathday"])}'
 		elif 'deathday' in self.attr:
-			label += '\\n† ' + str(self.attr['deathday'])
+			label += f'\\n† {str(self.attr["deathday"])}'
 		if 'notes' in self.attr:
-			label += '\\n' + str(self.attr['notes'])
-		opts = ['label="' + label + '"']
+			label += f'\\n{str(self.attr["notes"])}'
+		opts = [f'label="{label}"']
 		opts.append('style=filled')
 		opts.append('fillcolor=' + ('F' in self.attr and 'bisque' or
 					('M' in self.attr and 'azure2' or 'white')))
@@ -113,12 +113,12 @@ class Household:
 		self.kids: list[Person] = []
 		self.id = 0
 	
-	def __str__(self):
+	def __str__(self) -> str:
 		return	'Family:\n' + \
 				'\tparents  = ' + ', '.join(map(str, self.parents)) + '\n' \
 				'\tchildren = ' + ', '.join(map(str, self.kids))
 
-	def isempty(self):
+	def isempty(self) -> bool:
 		if len(self.parents) == 0 and len(self.kids) == 0:
 			return True
 		return False
@@ -131,12 +131,12 @@ class Family:
 
 	"""
 
-	everybody: dict[Any, Any] = {}
+	everybody: dict[Any, Person] = {}
 	households: list[Household] = []
 
 	invisible = '[shape=circle,label="",height=0.01,width=0.01]'
 
-	def add_person(self, string):
+	def add_person(self, string) -> Person:
 		"""Adds a person to self.everybody, or update his/her info if this
 		person already exists.
 
@@ -151,14 +151,14 @@ class Family:
 
 		return self.everybody[key]
 
-	def add_household(self, h: Household):
+	def add_household(self, h: Household) -> None:
 		"""Adds a union (household) to self.households, and updates the
 		family members infos about this union.
 
 		"""
-		if len(h.parents) != 2:
-			print('error: number of parents != 2')
-			return
+		# if len(h.parents) != 2:
+		# 	print('error: number of parents != 2')
+		# 	return
 
 		h.id = len(self.households)
 		self.households.append(h)
@@ -167,7 +167,7 @@ class Family:
 			if h not in p.households:
 				p.households.append(h)
 
-	def find_person(self, name):
+	def find_person(self, name: str) -> None | Person:
 		"""Tries to find a person matching the 'name' argument.
 
 		"""
@@ -239,14 +239,16 @@ class Family:
 		return next_gen
 
 	@staticmethod
-	def get_spouse(household, person):
+	def get_spouse(household: Household, person: Person) -> None | Person:
 		"""Returns the spouse or husband of a person in a union.
 
 		"""
-		return	household.parents[0] == person \
-				and household.parents[1] or household.parents[0]
+		if len(household.parents) > 1:
+			return	household.parents[0] == person \
+					and household.parents[1] or household.parents[0]
+		return None
 
-	def display_generation(self, gen):
+	def display_generation(self, gen: list[Person]):
 		"""Outputs an entire generation in DOT format.
 
 		"""
@@ -261,8 +263,10 @@ class Family:
 				if number_of_households <= 1:
 					print('\t\t%s -> %s [style=invis];' % (prev, p.id))
 				else:
-					print('\t\t%s -> %s [style=invis];'
-							% (prev, Family.get_spouse(p.households[0], p).id))
+					spouse = Family.get_spouse(p.households[0], p)
+					if spouse is not None:
+						print('\t\t%s -> %s [style=invis];'
+								% (prev, spouse.id))
 
 			if number_of_households == 0:
 				prev = p.id
@@ -275,17 +279,25 @@ class Family:
 			# Display those on the left (if any)
 			for i in range(0, int(number_of_households/2)):
 				h = p.households[i]
+				
 				spouse = Family.get_spouse(h, p)
-				print('\t\t%s -> h%d -> %s;' % (spouse.id, h.id, p.id))
-				print('\t\th%d%s;' % (h.id, Family.invisible))
+				if spouse is not None:				
+					print('\t\t%s -> h%d -> %s;' % (spouse.id, h.id, p.id))
+					print('\t\th%d%s;' % (h.id, Family.invisible))
+			
 
 			# Display those on the right (at least one)
 			for i in range(int(number_of_households/2), number_of_households):
 				h = p.households[i]
 				spouse = Family.get_spouse(h, p)
-				print('\t\t%s -> h%d -> %s;' % (p.id, h.id, spouse.id))
-				print('\t\th%d%s;' % (h.id, Family.invisible))
-				prev = spouse.id
+				if spouse is not None:
+					print('\t\t%s -> h%d -> %s;' % (p.id, h.id, spouse.id))
+					print('\t\th%d%s;' % (h.id, Family.invisible))
+					prev = spouse.id
+				else:
+					print('\t\t%s -> h%d;' % (p.id, h.id))
+					print('\t\th%d%s;' % (h.id, Family.invisible))
+					prev = None
 		print('\t}')
 
 		# Display lines below households
